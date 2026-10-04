@@ -3,20 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem F&B Market List & Report</title>
+    <title>Hotel F&B Management System - SR & Market List</title>
     <style>
-        :root { --primary: #2c3e50; --secondary: #34495e; --accent: #27ae60; --danger: #c0392b; --bg: #f8f9fa; --border: #dee2e6; }
+        :root { 
+            --primary: #1a252f; /* Dark Navy Elegan */
+            --secondary: #34495e; 
+            --accent: #d4af37; /* Aksen Gold Hotel */
+            --accent-hover: #b89728;
+            --danger: #c0392b; 
+            --bg: #f4f6f7; 
+            --border: #dcdde1; 
+        }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .container { max-width: 1400px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         
-        /* Header Logo Styling */
-        .app-header { display: flex; align-items: center; gap: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; }
-        .app-logo { height: 50px; width: auto; object-fit: contain; }
-        h1, h2 { color: var(--primary); margin: 0; font-size: 22px; }
+        /* AUTH PAGE (LANDING / LOGIN / REGISTER) */
+        #authScreen { max-width: 420px; margin: 60px auto; background: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); border-top: 5px solid var(--accent); }
+        .auth-logo-container { text-align: center; margin-bottom: 25px; }
+        .auth-logo { max-height: 70px; width: auto; object-fit: contain; }
+        .auth-title { text-align: center; color: var(--primary); font-size: 20px; margin-bottom: 20px; font-weight: 700; letter-spacing: 0.5px; }
+        .auth-tabs { display: flex; margin-bottom: 25px; border-bottom: 2px solid #eee; }
+        .auth-tab-btn { flex: 1; background: none; border: none; padding: 12px; font-weight: bold; cursor: pointer; color: #7f8c8d; font-size: 15px; transition: 0.3s; }
+        .auth-tab-btn.active { color: var(--primary); border-bottom: 3px solid var(--accent); }
+        .auth-form { display: none; }
+        .auth-form.active { display: block; }
+        .auth-group { margin-bottom: 15px; }
+        .auth-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: var(--secondary); }
+        .auth-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+        .btn-auth { width: 100%; background-color: var(--primary); color: white; padding: 12px; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-auth:hover { background-color: #2c3e50; }
+        .btn-gold { background-color: var(--accent); color: var(--primary); }
+        .btn-gold:hover { background-color: var(--accent-hover); color: white; }
+        .auth-error { color: var(--danger); font-size: 13px; text-align: center; margin-top: 10px; font-weight: 600; }
+
+        /* MAIN APP */
+        #appScreen { display: none; }
+        .app-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 20px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .app-logo { height: 45px; width: auto; object-fit: contain; }
+        .user-badge { background: #eef2f3; padding: 8px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .btn-logout { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        
+        h1, h2 { color: var(--primary); margin: 0; font-size: 20px; }
         
         /* TABS STYLING */
         .tabs { display: flex; border-bottom: 2px solid var(--primary); margin-bottom: 20px; }
-        .tab-btn { background: #eee; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; color: #555; transition: 0.3s; border-radius: 8px 8px 0 0; margin-right: 5px; }
+        .tab-btn { background: #eee; border: none; padding: 12px 24px; font-size: 15px; font-weight: bold; cursor: pointer; color: #555; transition: 0.3s; border-radius: 8px 8px 0 0; margin-right: 5px; }
         .tab-btn.active { background: var(--primary); color: white; }
         .tab-btn:hover:not(.active) { background: #ddd; }
         .tab-content { display: none; }
@@ -24,13 +56,13 @@
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
         .form-group { display: flex; flex-direction: column; }
-        label { font-weight: 600; margin-bottom: 8px; color: var(--secondary); font-size: 14px; }
-        input[type="text"], input[type="number"], input[type="date"], select { padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 15px; width: 100%; box-sizing: border-box; }
+        label { font-weight: 600; margin-bottom: 8px; color: var(--secondary); font-size: 13px; }
+        input[type="text"], input[type="number"], input[type="date"], select { padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
         
         /* Dashboard Cost */
         .budget-box { padding: 15px; border-radius: 4px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #eee; border-left-width: 5px; }
-        .budget-box h3 { margin: 0 0 5px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .budget-amount { font-size: 22px; font-weight: bold; }
+        .budget-box h3 { margin: 0 0 5px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .budget-amount { font-size: 20px; font-weight: bold; }
         .rev-box { border-left-color: #3498db; } .rev-box h3 { color: #2980b9; }
         .target-box { border-left-color: #f39c12; } .target-box h3 { color: #d35400; }
         .actual-box { border-left-color: #27ae60; background-color: #f0fdf4; } .actual-box h3 { color: #1e8449; }
@@ -48,7 +80,7 @@
         .std-col { background-color: #fef5e7; color: #d35400;}
         .actual-ap-col { background-color: #d5f5e3; font-weight: bold; color: #196f3d;}
         
-        .currency-prefix { position: absolute; margin-left: 10px; margin-top: 10px; color: #7f8c8d; font-size: 15px; }
+        .currency-prefix { position: absolute; margin-left: 10px; margin-top: 10px; color: #7f8c8d; font-size: 14px; }
         .with-prefix { padding-left: 35px !important; }
         .input-wrapper { position: relative; display: flex; flex-direction: column; }
         
@@ -68,7 +100,7 @@
         .filter-box { background: #eaf2f8; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; }
         
         @media print {
-            .no-print, .tabs { display: none !important; }
+            .no-print, .tabs, .user-badge { display: none !important; }
             body { background: white; padding: 0; }
             .container { box-shadow: none; padding: 0; max-width: 100%; }
             input, select { border: none !important; background: transparent !important; padding: 0; -webkit-appearance: none; font-size:12px; }
@@ -81,127 +113,254 @@
 </head>
 <body>
 
-<div class="container">
-    <div class="tabs no-print">
-        <button class="tab-btn active" onclick="switchTab('form', this)">Form SR & Market List</button>
-        <button class="tab-btn" onclick="switchTab('report', this)">Laporan & Riwayat Event</button>
+    <!-- LANDING PAGE / AUTH SCREEN -->
+    <div id="authScreen">
+        <div class="auth-logo-container">
+            <img src="logo.png" alt="Hotel Logo" class="auth-logo" onerror="this.style.display='none'">
+        </div>
+        <div class="auth-title">F&B BANQUET MANAGEMENT SYSTEM</div>
+        
+        <div class="auth-tabs">
+            <button class="auth-tab-btn active" onclick="switchAuthTab('login', this)">Login</button>
+            <button class="auth-tab-btn" onclick="switchAuthTab('register', this)">Daftar Akun</button>
+        </div>
+
+        <!-- FORM LOGIN -->
+        <div id="loginForm" class="auth-form active">
+            <div class="auth-group">
+                <label>Username</label>
+                <input type="text" id="loginUser" class="auth-input" placeholder="Masukkan username...">
+            </div>
+            <div class="auth-group">
+                <label>Password</label>
+                <input type="password" id="loginPass" class="auth-input" placeholder="Masukkan password...">
+            </div>
+            <button class="btn-auth btn-gold" onclick="handleLogin()">MASUK SISTEM</button>
+            <div id="loginError" class="auth-error"></div>
+        </div>
+
+        <!-- FORM REGISTER -->
+        <div id="registerForm" class="auth-form">
+            <div class="auth-group">
+                <label>Username Baru</label>
+                <input type="text" id="regUser" class="auth-input" placeholder="Buat username...">
+            </div>
+            <div class="auth-group">
+                <label>Password</label>
+                <input type="password" id="regPass" class="auth-input" placeholder="Buat password...">
+            </div>
+            <button class="btn-auth" onclick="handleRegister()">DAFTAR AKUN BARU</button>
+            <div id="regError" class="auth-error"></div>
+        </div>
     </div>
 
-    <!-- TAB 1: FORM INPUT -->
-    <div id="form" class="tab-content active">
+    <!-- MAIN APP SCREEN -->
+    <div id="appScreen" class="container">
         <div class="app-header">
-            <img src="logo.png" alt="Logo" class="app-logo" onerror="this.style.display='none'">
-            <h1>SR & Market List Generator</h1>
-        </div>
-        
-        <div class="form-grid">
-            <div class="form-group"><label>Nama Event:</label><input type="text" id="eventName" placeholder="Contoh: Gala Dinner BEM"></div>
-            <div class="form-group"><label>Tanggal Event:</label><input type="date" id="eventDate"></div>
-            <div class="form-group"><label>Target Pax:</label><input type="number" id="pax" value="200" min="1" oninput="calculateAll()"></div>
-            <div class="form-group input-wrapper"><label>Selling Price / Pax:</label>
-                <div><span class="currency-prefix">Rp</span><input type="text" id="sellingPrice" class="with-prefix" value="150.000" onkeyup="formatCurrencyInput(this); calculateAll()"></div>
+            <div class="header-left">
+                <img src="logo.png" alt="Logo" class="app-logo" onerror="this.style.display='none'">
+                <h1>SR & Market List Generator</h1>
             </div>
+            <div class="user-badge">
+                <span>👤 Pembuat SR: <strong id="displayUser">-</strong></span>
+                <button class="btn-logout" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="tabs no-print">
+            <button class="tab-btn active" onclick="switchTab('form', this)">Form SR & Market List</button>
+            <button class="tab-btn" onclick="switchTab('report', this)">Laporan & Riwayat Event</button>
+        </div>
+
+        <!-- TAB 1: FORM INPUT -->
+        <div id="form" class="tab-content active">
+            <div class="form-grid">
+                <div class="form-group"><label>Nama Event:</label><input type="text" id="eventName" placeholder="Contoh: Gala Dinner BEM"></div>
+                <div class="form-group"><label>Tanggal Event:</label><input type="date" id="eventDate"></div>
+                <div class="form-group"><label>Target Pax:</label><input type="number" id="pax" value="200" min="1" oninput="calculateAll()"></div>
+                <div class="form-group input-wrapper"><label>Selling Price / Pax:</label>
+                    <div><span class="currency-prefix">Rp</span><input type="text" id="sellingPrice" class="with-prefix" value="150.000" onkeyup="formatCurrencyInput(this); calculateAll()"></div>
+                </div>
+                
+                <div class="form-group budget-box rev-box">
+                    <h3>Total Revenue</h3>
+                    <div class="budget-amount" id="totalRevenueText">Rp 30.000.000</div>
+                </div>
+                <div class="form-group budget-box target-box">
+                    <h3>Target Cost (Maks 28%)</h3>
+                    <div class="budget-amount" id="budgetAmount">Rp 8.400.000</div>
+                </div>
+                <div class="form-group budget-box actual-box" id="actualBox">
+                    <h3>Actual Food Cost</h3>
+                    <div class="budget-amount" id="actualAmount">Rp 0</div>
+                    <div id="actualFCPct" style="font-weight: bold; font-size: 15px; margin-top: 2px;">0.00%</div>
+                </div>
+            </div>
+
+            <h2>Daftar Bahan Baku</h2>
+            <div class="table-responsive">
+                <table id="mlTable">
+                    <thead>
+                        <tr>
+                            <th width="19%">Nama Bahan (Pilih/Ketik)</th>
+                            <th width="8%">Net / Pax (EP)</th>
+                            <th width="7%">Satuan</th>
+                            <th width="7%" title="Yield terkunci standar hotel jika dari database">Yield (%)</th>
+                            <th width="8%" title="Diskon penggunaan bahan skala besar">Efisiensi Bulk (%)</th>
+                            <th width="10%" title="Kebutuhan AP secara teori matematis murni">Ideal Consumed (AP)</th>
+                            <th width="10%" title="Angka mutlak untuk diajukan ke Purchasing">Jumlah Beli SR/ML (AP)</th>
+                            <th width="13%">Harga Satuan</th>
+                            <th width="13%">Total Harga</th>
+                            <th width="5%" class="no-print">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mlBody"></tbody>
+                    <tfoot>
+                        <tr class="summary-row"><td colspan="8" style="text-align: right;">GRAND TOTAL ACTUAL COST:</td><td id="grandTotalText">Rp 0</td><td class="no-print"></td></tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;" class="no-print">
+                <button class="btn btn-add btn-full" onclick="addRow()">+ Tambah Item</button>
+                <button class="btn btn-warning btn-full" onclick="resetForm()">🔄 Refresh / Form Baru</button>
+                <button class="btn btn-save btn-full" onclick="saveEventData()">💾 Simpan ke Database</button>
+                <button class="btn btn-print btn-full" onclick="window.print()">🖨️ Cetak / PDF</button>
+            </div>
+        </div>
+
+        <!-- TAB 2: REPORT & ARSIP -->
+        <div id="report" class="tab-content">
+            <h2>Laporan & Riwayat Event</h2>
             
-            <div class="form-group budget-box rev-box">
-                <h3>Total Revenue</h3>
-                <div class="budget-amount" id="totalRevenueText">Rp 30.000.000</div>
+            <div class="filter-box no-print">
+                <div class="form-group">
+                    <label>Dari Tanggal:</label>
+                    <input type="date" id="filterStart">
+                </div>
+                <div class="form-group">
+                    <label>Sampai Tanggal:</label>
+                    <input type="date" id="filterEnd">
+                </div>
+                <button class="btn btn-add" style="margin:0 0 2px 0;" onclick="loadReport()">Filter Data</button>
+                <button class="btn btn-danger" style="margin:0 0 2px 0; background-color:#c0392b;" onclick="clearAllData()">Hapus Semua Data</button>
+                <button class="btn btn-print" style="margin:0 0 2px auto;" onclick="window.print()">🖨️ Cetak Laporan</button>
             </div>
-            <div class="form-group budget-box target-box">
-                <h3>Target Cost (Maks 28%)</h3>
-                <div class="budget-amount" id="budgetAmount">Rp 8.400.000</div>
-            </div>
-            <div class="form-group budget-box actual-box" id="actualBox">
-                <h3>Actual Food Cost</h3>
-                <div class="budget-amount" id="actualAmount">Rp 0</div>
-                <div id="actualFCPct" style="font-weight: bold; font-size: 16px; margin-top: 2px;">0.00%</div>
-            </div>
-        </div>
 
-        <h2>Daftar Bahan Baku</h2>
-        <div class="table-responsive">
-            <table id="mlTable">
-                <thead>
-                    <tr>
-                        <th width="19%">Nama Bahan (Pilih/Ketik)</th>
-                        <th width="8%">Net / Pax (EP)</th>
-                        <th width="7%">Satuan</th>
-                        <th width="7%" title="Yield terkunci standar hotel jika dari database">Yield (%)</th>
-                        <th width="8%" title="Diskon penggunaan bahan skala besar">Efisiensi Bulk (%)</th>
-                        <th width="10%" title="Kebutuhan AP secara teori matematis murni">Ideal Consumed (AP)</th>
-                        <th width="10%" title="Angka mutlak untuk diajukan ke Purchasing">Jumlah Beli SR/ML (AP)</th>
-                        <th width="13%">Harga Satuan</th>
-                        <th width="13%">Total Harga</th>
-                        <th width="5%" class="no-print">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="mlBody"></tbody>
-                <tfoot>
-                    <tr class="summary-row"><td colspan="8" style="text-align: right;">GRAND TOTAL ACTUAL COST:</td><td id="grandTotalText">Rp 0</td><td class="no-print"></td></tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-top: 20px;" class="no-print">
-            <button class="btn btn-add btn-full" onclick="addRow()">+ Tambah Item</button>
-            <button class="btn btn-warning btn-full" onclick="resetForm()">🔄 Refresh / Form Baru</button>
-            <button class="btn btn-save btn-full" onclick="saveEventData()">💾 Simpan ke Database</button>
-            <button class="btn btn-print btn-full" onclick="window.print()">🖨️ Cetak / PDF</button>
+            <div class="table-responsive">
+                <table id="reportTable">
+                    <thead>
+                        <tr>
+                            <th>Tanggal Event</th>
+                            <th>Nama Event</th>
+                            <th>Pax</th>
+                            <th>Pembuat SR</th>
+                            <th>Total Revenue</th>
+                            <th>Actual Cost (Rp)</th>
+                            <th>Cost %</th>
+                            <th class="no-print">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportBody">
+                        <!-- Report rows here -->
+                    </tbody>
+                    <tfoot>
+                        <tr class="summary-row" style="background-color: #d5f5e3;">
+                            <td colspan="4" style="text-align: right;">TOTAL KUMULATIF:</td>
+                            <td id="repTotalRev">Rp 0</td>
+                            <td id="repTotalCost">Rp 0</td>
+                            <td id="repTotalPct">0.00%</td>
+                            <td class="no-print"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
     </div>
-
-    <!-- TAB 2: REPORT & ARSIP -->
-    <div id="report" class="tab-content">
-        <div class="app-header">
-            <img src="logo.png" alt="Logo" class="app-logo" onerror="this.style.display='none'">
-            <h1>Laporan & Riwayat Event</h1>
-        </div>
-        
-        <div class="filter-box no-print">
-            <div class="form-group">
-                <label>Dari Tanggal:</label>
-                <input type="date" id="filterStart">
-            </div>
-            <div class="form-group">
-                <label>Sampai Tanggal:</label>
-                <input type="date" id="filterEnd">
-            </div>
-            <button class="btn btn-add" style="margin:0 0 2px 0;" onclick="loadReport()">Filter Data</button>
-            <button class="btn btn-danger" style="margin:0 0 2px 0; background-color:#c0392b;" onclick="clearAllData()">Hapus Semua Data</button>
-            <button class="btn btn-print" style="margin:0 0 2px auto;" onclick="window.print()">🖨️ Cetak Laporan</button>
-        </div>
-
-        <div class="table-responsive">
-            <table id="reportTable">
-                <thead>
-                    <tr>
-                        <th>Tanggal Event</th>
-                        <th>Nama Event</th>
-                        <th>Pax</th>
-                        <th>Total Revenue</th>
-                        <th>Actual Cost (Rp)</th>
-                        <th>Cost %</th>
-                        <th class="no-print">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="reportBody">
-                    <!-- Report rows here -->
-                </tbody>
-                <tfoot>
-                    <tr class="summary-row" style="background-color: #d5f5e3;">
-                        <td colspan="3" style="text-align: right;">TOTAL KUMULATIF:</td>
-                        <td id="repTotalRev">Rp 0</td>
-                        <td id="repTotalCost">Rp 0</td>
-                        <td id="repTotalPct">0.00%</td>
-                        <td class="no-print"></td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-    </div>
-</div>
 
 <script>
-    // COMPLETE MASTER YIELD DATABASE (100+ ITEMS)
+    // --- AUTHENTICATION LOGIC ---
+    function switchAuthTab(tab, btn) {
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
+        if(tab === 'login') {
+            document.getElementById('loginForm').classList.add('active');
+        } else {
+            document.getElementById('registerForm').classList.add('active');
+        }
+        btn.classList.add('active');
+    }
+
+    function handleRegister() {
+        const u = document.getElementById('regUser').value.trim();
+        const p = document.getElementById('regPass').value.trim();
+        const err = document.getElementById('regError');
+
+        if(!u || !p) {
+            err.innerText = "Username dan password wajib diisi!";
+            return;
+        }
+
+        let users = JSON.parse(localStorage.getItem('fnb_users')) || [];
+        if(users.some(x => x.username === u)) {
+            err.innerText = "Username sudah terdaftar!";
+            return;
+        }
+
+        users.push({ username: u, password: p });
+        localStorage.setItem('fnb_users', JSON.stringify(users));
+        alert("Pendaftaran akun berhasil! Silakan login.");
+        document.getElementById('regUser').value = '';
+        document.getElementById('regPass').value = '';
+        err.innerText = '';
+        switchAuthTab('login', document.querySelector('.auth-tab-btn'));
+    }
+
+    function handleLogin() {
+        const u = document.getElementById('loginUser').value.trim();
+        const p = document.getElementById('loginPass').value.trim();
+        const err = document.getElementById('loginError');
+
+        let users = JSON.parse(localStorage.getItem('fnb_users')) || [];
+        const validUser = users.find(x => x.username === u && x.password === p);
+
+        // Akun Default Hotel jika belum register
+        if((u === 'admin' && p === 'admin123') || validUser) {
+            const activeUser = validUser ? validUser.username : u;
+            localStorage.setItem('fnb_logged_user', activeUser);
+            initApp(activeUser);
+        } else {
+            err.innerText = "Username atau password salah! (Coba admin / admin123)";
+        }
+    }
+
+    function handleLogout() {
+        localStorage.removeItem('fnb_logged_user');
+        document.getElementById('appScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'block';
+        document.getElementById('loginUser').value = '';
+        document.getElementById('loginPass').value = '';
+        document.getElementById('loginError').innerText = '';
+    }
+
+    function initApp(username) {
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'block';
+        document.getElementById('displayUser').innerText = username;
+        if(document.querySelectorAll('#mlBody tr').length === 0) {
+            addRow();
+            calculateAll();
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const logged = localStorage.getItem('fnb_logged_user');
+        if(logged) {
+            initApp(logged);
+        }
+    });
+
+    // --- MASTER YIELD DATABASE (100+ ITEMS) ---
     const yieldDatabase = {
         "Daging Sapi & Kambing (Beef & Lamb)": [
             { name: "Beef Tenderloin / Has Dalam", yield: 80, unit: "Kg" }, { name: "Beef Striploin / Sirloin", yield: 85, unit: "Kg" },
@@ -433,13 +592,14 @@
         document.getElementById('mlBody').appendChild(tr);
     }
     
-    // --- FITUR SIMPAN DATA (LOCAL STORAGE) ---
+    // --- FITUR SIMPAN DATA (LOCAL STORAGE DENGAN USERNAME) ---
     function saveEventData() {
         const eventName = document.getElementById('eventName').value || "Event Tanpa Nama";
         const eventDate = document.getElementById('eventDate').value || new Date().toISOString().split('T')[0];
         const pax = document.getElementById('pax').value;
         const totalRev = unformatCurrency(document.getElementById('totalRevenueText').innerText);
         const totalCost = unformatCurrency(document.getElementById('grandTotalText').innerText);
+        const creator = localStorage.getItem('fnb_logged_user') || 'Unknown';
         
         let eventsArray = JSON.parse(localStorage.getItem('fnb_events')) || [];
         
@@ -448,6 +608,7 @@
             name: eventName,
             date: eventDate,
             pax: pax,
+            creator: creator,
             revenue: totalRev,
             cost: totalCost
         };
@@ -455,7 +616,7 @@
         eventsArray.push(newEvent);
         localStorage.setItem('fnb_events', JSON.stringify(eventsArray));
         
-        alert("Data Event Berhasil Disimpan ke Database Lokal!");
+        alert("Data Event Berhasil Disimpan oleh user: " + creator);
     }
 
     // --- FITUR REPORT & FILTER ---
@@ -478,12 +639,14 @@
             sumRev += evt.revenue;
             sumCost += evt.cost;
             const pct = evt.revenue > 0 ? ((evt.cost / evt.revenue) * 100).toFixed(2) : 0;
+            const creatorName = evt.creator || 'Admin';
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${evt.date}</td>
                 <td><strong>${evt.name}</strong></td>
                 <td>${evt.pax}</td>
+                <td><span style="background:#eef2f3; padding:3px 8px; border-radius:4px; font-weight:600;">${creatorName}</span></td>
                 <td>Rp ${formatRupiah(evt.revenue)}</td>
                 <td>Rp ${formatRupiah(evt.cost)}</td>
                 <td style="color:${pct > 28 ? 'red' : 'green'}; font-weight:bold;">${pct}%</td>
@@ -514,8 +677,6 @@
             loadReport();
         }
     }
-
-    window.onload = () => { addRow(); calculateAll(); };
 </script>
 </body>
 </html>
