@@ -591,18 +591,28 @@
         document.getElementById('mlBody').appendChild(tr);
     }
     
-    // --- FITUR SIMPAN DATA (MENGAMBIL NILAI REAL-TIME DARI LAYAR) ---
+    // --- FITUR SIMPAN DATA (MENGHITUNG ULANG DENGAN AMAN) ---
     function saveEventData() {
-        // Pastikan kalkulasi terbaru dijalankan sebelum disimpan
         calculateAll();
 
         const eventName = document.getElementById('eventName').value || "Event Tanpa Nama";
         const eventDate = document.getElementById('eventDate').value || new Date().toISOString().split('T')[0];
-        const pax = document.getElementById('pax').value;
+        const pax = parseFloat(document.getElementById('pax').value) || 0;
         
-        // Ambil nilai real-time langsung dari teks di dashboard
-        const totalRev = unformatCurrency(document.getElementById('totalRevenueText').innerText);
-        const totalCost = unformatCurrency(document.getElementById('grandTotalText').innerText);
+        let totalRev = 0;
+        document.querySelectorAll('#mlBody tr').forEach(row => {
+            const net = parseFloat(row.querySelector('.qty-base').value) || 0;
+            const yld = parseFloat(row.querySelector('.yield-pct').value) || 100;
+            const bulkPct = parseFloat(row.querySelector('.bulk-pct').value) || 100; 
+            const price = unformatCurrency(row.querySelector('.price-unit').value);
+            const actualYield = yld > 0 ? (yld / 100) : 1;
+            const idealConsumed = (net * pax) / actualYield;
+            const grossActual = idealConsumed * (bulkPct / 100);
+            totalRev += (grossActual * price);
+        });
+
+        const sellingPricePerPax = unformatCurrency(document.getElementById('sellingPrice').value);
+        const calculatedRevenue = pax * sellingPricePerPax;
         const creator = localStorage.getItem('fnb_logged_user') || 'Admin';
         
         let eventsArray = JSON.parse(localStorage.getItem('fnb_events')) || [];
@@ -613,16 +623,16 @@
             date: eventDate,
             pax: pax,
             creator: creator,
-            revenue: totalRev,
-            cost: totalCost
+            revenue: calculatedRevenue,
+            cost: totalRev
         };
         
         eventsArray.push(newEvent);
         localStorage.setItem('fnb_events', JSON.stringify(eventsArray));
         
-        alert("Data Event Berhasil Disimpan!\nEvent: " + eventName + "\nCost: " + document.getElementById('grandTotalText').innerText);
+        alert("Data Event Berhasil Disimpan!\nEvent: " + eventName + "\nTotal Actual Cost: Rp " + formatRupiah(totalRev));
         
-        // Otomatis pindah ke tab laporan untuk melihat hasilnya
+        // Pindah otomatis ke tab laporan
         switchTab('report', document.querySelectorAll('.tab-btn')[1]);
     }
 
@@ -643,9 +653,12 @@
             if (filterStart && evt.date < filterStart) return;
             if (filterEnd && evt.date > filterEnd) return;
             
-            sumRev += evt.revenue || 0;
-            sumCost += evt.cost || 0;
-            const pct = evt.revenue > 0 ? ((evt.cost / evt.revenue) * 100).toFixed(2) : 0;
+            const rev = parseFloat(evt.revenue) || 0;
+            const cost = parseFloat(evt.cost) || 0;
+            
+            sumRev += rev;
+            sumCost += cost;
+            const pct = rev > 0 ? ((cost / rev) * 100).toFixed(2) : 0;
             const creatorName = evt.creator || 'Admin';
             
             const tr = document.createElement('tr');
@@ -654,8 +667,8 @@
                 <td><strong>${evt.name}</strong></td>
                 <td>${evt.pax}</td>
                 <td><span style="background:#eef2f3; padding:3px 8px; border-radius:4px; font-weight:600;">${creatorName}</span></td>
-                <td>Rp ${formatRupiah(evt.revenue || 0)}</td>
-                <td>Rp ${formatRupiah(evt.cost || 0)}</td>
+                <td>Rp ${formatRupiah(rev)}</td>
+                <td>Rp ${formatRupiah(cost)}</td>
                 <td style="color:${pct > 28 ? 'red' : 'green'}; font-weight:bold;">${pct}%</td>
                 <td class="no-print"><button class="btn btn-remove" onclick="deleteEvent(${evt.id})">Hapus</button></td>
             `;
