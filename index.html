@@ -8,7 +8,11 @@
         :root { --primary: #2c3e50; --secondary: #34495e; --accent: #27ae60; --danger: #c0392b; --bg: #f8f9fa; --border: #dee2e6; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: #333; margin: 0; padding: 20px; }
         .container { max-width: 1400px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1, h2 { color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; font-size: 22px; }
+        
+        /* Header Logo Styling */
+        .app-header { display: flex; align-items: center; gap: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; }
+        .app-logo { height: 50px; width: auto; object-fit: contain; }
+        h1, h2 { color: var(--primary); margin: 0; font-size: 22px; }
         
         /* TABS STYLING */
         .tabs { display: flex; border-bottom: 2px solid var(--primary); margin-bottom: 20px; }
@@ -85,7 +89,10 @@
 
     <!-- TAB 1: FORM INPUT -->
     <div id="form" class="tab-content active">
-        <h1>SR & Market List Generator</h1>
+        <div class="app-header">
+            <img src="logo.png" alt="Logo" class="app-logo" onerror="this.style.display='none'">
+            <h1>SR & Market List Generator</h1>
+        </div>
         
         <div class="form-grid">
             <div class="form-group"><label>Nama Event:</label><input type="text" id="eventName" placeholder="Contoh: Gala Dinner BEM"></div>
@@ -144,7 +151,10 @@
 
     <!-- TAB 2: REPORT & ARSIP -->
     <div id="report" class="tab-content">
-        <h1>Laporan & Riwayat Event</h1>
+        <div class="app-header">
+            <img src="logo.png" alt="Logo" class="app-logo" onerror="this.style.display='none'">
+            <h1>Laporan & Riwayat Event</h1>
+        </div>
         
         <div class="filter-box no-print">
             <div class="form-group">
@@ -320,7 +330,7 @@
         }
     }
 
-    // --- LOGIKA PERUBAHAN ITEM (YIELD DIKUNCI, SATUAN BEBAS) ---
+    // --- LOGIKA PERUBAHAN ITEM ---
     function handleItemChange(selectEl) {
         const row = selectEl.closest('tr');
         const customInput = row.querySelector('.custom-name-input');
@@ -328,7 +338,6 @@
         const yieldInput = row.querySelector('.yield-pct');
 
         if (selectEl.value === 'custom') {
-            // JIKA CUSTOM: Buka kunci yield agar bisa diisi manual
             customInput.style.display = 'block'; 
             if(!customInput.value) customInput.value = '';
             yieldInput.value = '100'; 
@@ -337,7 +346,6 @@
         } else {
             customInput.style.display = 'none';
             if (selectEl.value !== '') {
-                // JIKA DARI DATABASE: Isi otomatis dan KUNCI YIELD (TIDAK BISA DIUTAK-ATIK)
                 const opt = selectEl.options[selectEl.selectedIndex];
                 unitInput.value = opt.getAttribute('data-unit'); 
                 
@@ -345,7 +353,6 @@
                 yieldInput.setAttribute('readonly', 'true'); 
                 yieldInput.classList.add('locked-input');
             } else {
-                // JIKA KOSONG: Reset
                 unitInput.value = ''; 
                 yieldInput.value = '';
                 yieldInput.removeAttribute('readonly');
@@ -402,7 +409,6 @@
             } else {
                 actualBox.classList.remove('over-budget');
                 actualFCPctEl.style.color = '#1e8449';
-                document.getElementById('grandTotalText').style.color = "#1e8449";
             }
         } else {
             actualFCPctEl.innerText = '0.00%';
@@ -466,7 +472,6 @@
         let sumCost = 0;
 
         eventsArray.forEach(evt => {
-            // Logika Filter
             if (filterStart && evt.date < filterStart) return;
             if (filterEnd && evt.date > filterEnd) return;
             
@@ -487,7 +492,6 @@
             tbody.appendChild(tr);
         });
 
-        // Update Grand Total Report
         document.getElementById('repTotalRev').innerText = 'Rp ' + formatRupiah(sumRev);
         document.getElementById('repTotalCost').innerText = 'Rp ' + formatRupiah(sumCost);
         const tPct = sumRev > 0 ? ((sumCost / sumRev) * 100).toFixed(2) : 0;
