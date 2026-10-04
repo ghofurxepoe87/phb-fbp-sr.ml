@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem F&B Market List & Report</title>
+    <style>
+        :root { --primary: #2c3e50; --secondary: #34495e; --accent: #27ae60; --danger: #c0392b; --bg: #f8f9fa; --border: #dee2e6; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2 { color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; font-size: 22px; }
+        
+        /* TABS STYLING */
+        .tabs { display: flex; border-bottom: 2px solid var(--primary); margin-bottom: 20px; }
+        .tab-btn { background: #eee; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; color: #555; transition: 0.3s; border-radius: 8px 8px 0 0; margin-right: 5px; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .tab-btn:hover:not(.active) { background: #ddd; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 8px; color: var(--secondary); font-size: 14px; }
+        input[type="text"], input[type="number"], input[type="date"], select { padding: 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 15px; width: 100%; box-sizing: border-box; }
+        
+        /* Dashboard Cost */
+        .budget-box { padding: 15px; border-radius: 4px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #eee; border-left-width: 5px; }
+        .budget-box h3 { margin: 0 0 5px 0; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .budget-amount { font-size: 22px; font-weight: bold; }
+        .rev-box { border-left-color: #3498db; } .rev-box h3 { color: #2980b9; }
+        .target-box { border-left-color: #f39c12; } .target-box h3 { color: #d35400; }
+        .actual-box { border-left-color: #27ae60; background-color: #f0fdf4; } .actual-box h3 { color: #1e8449; }
+        .actual-box.over-budget { border-left-color: #c0392b; background-color: #fdedec; } .actual-box.over-budget h3 { color: #c0392b; }
+        
+        .table-responsive { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: left; font-size: 13px; vertical-align: top; }
+        th { background-color: var(--primary); color: white; line-height: 1.3; }
+        .table-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
+        input.table-input[readonly] { background-color: #e8ecef; border: 1px solid #ced4da; color: #495057; font-weight: bold; }
+        
+        .yield-col { background-color: #fff9e6; }
+        .bulk-col { background-color: #e8f4f8; }
+        .std-col { background-color: #fef5e7; color: #d35400;}
+        .actual-ap-col { background-color: #d5f5e3; font-weight: bold; color: #196f3d;}
+        
+        .currency-prefix { position: absolute; margin-left: 10px; margin-top: 10px; color: #7f8c8d; font-size: 15px; }
+        .with-prefix { padding-left: 35px !important; }
+        .input-wrapper { position: relative; display: flex; flex-direction: column; }
+        
+        .btn { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; color: white; margin-top: 10px; }
+        .btn-full { width: 100%; }
+        .btn:hover { opacity: 0.8; }
+        .btn-add { background-color: #2980b9; }
+        .btn-save { background-color: #27ae60; }
+        .btn-warning { background-color: #f39c12; }
+        .btn-remove { background-color: var(--danger); padding: 6px 10px; font-size: 12px; width: 100%; }
+        .btn-print { background-color: var(--secondary); margin-top: 10px; }
+        
+        .summary-row { font-weight: bold; background-color: #e5e8e8; }
+        .custom-name-input { margin-top: 5px; display: none; background-color: #fffcdf; border-color: #f1c40f;}
+
+        /* Report Styles */
+        .filter-box { background: #eaf2f8; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; }
+        
+        @media print {
+            .no-print, .tabs { display: none !important; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; padding: 0; max-width: 100%; }
+            input, select { border: none !important; background: transparent !important; padding: 0; -webkit-appearance: none; font-size:12px; }
+            .yield-col, .bulk-col, .std-col, .actual-ap-col { background-color: transparent; }
+            .currency-prefix { display: none; }
+            .with-prefix { padding-left: 0 !important; }
+            .custom-name-input { margin-top: 0; border:none; background: transparent; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="tabs no-print">
+        <button class="tab-btn active" onclick="switchTab('form', this)">Form SR & Market List</button>
+        <button class="tab-btn" onclick="switchTab('report', this)">Laporan & Riwayat Event</button>
+    </div>
+
+    <!-- TAB 1: FORM INPUT -->
+    <div id="form" class="tab-content active">
+        <h1>SR & Market List Generator</h1>
+        
+        <div class="form-grid">
+            <div class="form-group"><label>Nama Event:</label><input type="text" id="eventName" placeholder="Contoh: Gala Dinner BEM"></div>
+            <div class="form-group"><label>Tanggal Event:</label><input type="date" id="eventDate"></div>
+            <div class="form-group"><label>Target Pax:</label><input type="number" id="pax" value="200" min="1" oninput="calculateAll()"></div>
+            <div class="form-group input-wrapper"><label>Selling Price / Pax:</label>
+                <div><span class="currency-prefix">Rp</span><input type="text" id="sellingPrice" class="with-prefix" value="150.000" onkeyup="formatCurrencyInput(this); calculateAll()"></div>
+            </div>
+            
+            <div class="form-group budget-box rev-box">
+                <h3>Total Revenue</h3>
+                <div class="budget-amount" id="totalRevenueText">Rp 30.000.000</div>
+            </div>
+            <div class="form-group budget-box target-box">
+                <h3>Target Cost (Maks 28%)</h3>
+                <div class="budget-amount" id="budgetAmount">Rp 8.400.000</div>
+            </div>
+            <div class="form-group budget-box actual-box" id="actualBox">
+                <h3>Actual Food Cost</h3>
+                <div class="budget-amount" id="actualAmount">Rp 0</div>
+                <div id="actualFCPct" style="font-weight: bold; font-size: 16px; margin-top: 2px;">0.00%</div>
+            </div>
+        </div>
+
+        <h2>Daftar Bahan Baku</h2>
+        <div class="table-responsive">
+            <table id="mlTable">
+                <thead>
+                    <tr>
+                        <th width="19%">Nama Bahan (Pilih/Ketik)</th>
+                        <th width="8%">Net / Pax (EP)</th>
+                        <th width="7%">Satuan</th>
+                        <th width="7%" title="Yield terkunci standar hotel jika dari database">Yield (%)</th>
+                        <th width="8%" title="Diskon penggunaan bahan skala besar">Efisiensi Bulk (%)</th>
+                        <th width="10%" title="Kebutuhan AP secara teori matematis murni">Ideal Consumed (AP)</th>
+                        <th width="10%" title="Angka mutlak untuk diajukan ke Purchasing">Jumlah Beli SR/ML (AP)</th>
+                        <th width="13%">Harga Satuan</th>
+                        <th width="13%">Total Harga</th>
+                        <th width="5%" class="no-print">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="mlBody"></tbody>
+                <tfoot>
+                    <tr class="summary-row"><td colspan="8" style="text-align: right;">GRAND TOTAL ACTUAL COST:</td><td id="grandTotalText">Rp 0</td><td class="no-print"></td></tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;" class="no-print">
+            <button class="btn btn-add btn-full" onclick="addRow()">+ Tambah Item</button>
+            <button class="btn btn-warning btn-full" onclick="resetForm()">🔄 Refresh / Form Baru</button>
+            <button class="btn btn-save btn-full" onclick="saveEventData()">💾 Simpan ke Database</button>
+            <button class="btn btn-print btn-full" onclick="window.print()">🖨️ Cetak / PDF</button>
+        </div>
+    </div>
+
+    <!-- TAB 2: REPORT & ARSIP -->
+    <div id="report" class="tab-content">
+        <h1>Laporan & Riwayat Event</h1>
+        
+        <div class="filter-box no-print">
+            <div class="form-group">
+                <label>Dari Tanggal:</label>
+                <input type="date" id="filterStart">
+            </div>
+            <div class="form-group">
+                <label>Sampai Tanggal:</label>
+                <input type="date" id="filterEnd">
+            </div>
+            <button class="btn btn-add" style="margin:0 0 2px 0;" onclick="loadReport()">Filter Data</button>
+            <button class="btn btn-danger" style="margin:0 0 2px 0; background-color:#c0392b;" onclick="clearAllData()">Hapus Semua Data</button>
+            <button class="btn btn-print" style="margin:0 0 2px auto;" onclick="window.print()">🖨️ Cetak Laporan</button>
+        </div>
+
+        <div class="table-responsive">
+            <table id="reportTable">
+                <thead>
+                    <tr>
+                        <th>Tanggal Event</th>
+                        <th>Nama Event</th>
+                        <th>Pax</th>
+                        <th>Total Revenue</th>
+                        <th>Actual Cost (Rp)</th>
+                        <th>Cost %</th>
+                        <th class="no-print">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="reportBody">
+                    <!-- Report rows here -->
+                </tbody>
+                <tfoot>
+                    <tr class="summary-row" style="background-color: #d5f5e3;">
+                        <td colspan="3" style="text-align: right;">TOTAL KUMULATIF:</td>
+                        <td id="repTotalRev">Rp 0</td>
+                        <td id="repTotalCost">Rp 0</td>
+                        <td id="repTotalPct">0.00%</td>
+                        <td class="no-print"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // COMPLETE MASTER YIELD DATABASE (100+ ITEMS)
+    const yieldDatabase = {
+        "Daging Sapi & Kambing (Beef & Lamb)": [
+            { name: "Beef Tenderloin / Has Dalam", yield: 80, unit: "Kg" }, { name: "Beef Striploin / Sirloin", yield: 85, unit: "Kg" },
+            { name: "Beef Ribeye / Cube Roll", yield: 85, unit: "Kg" }, { name: "Beef Topside / Paha", yield: 90, unit: "Kg" },
+            { name: "Beef Brisket / Sandung Lamur", yield: 85, unit: "Kg" }, { name: "Beef Short Ribs / Iga Sapi", yield: 90, unit: "Kg" },
+            { name: "Oxtail / Buntut Sapi", yield: 80, unit: "Kg" }, { name: "Daging Sapi Giling (Minced)", yield: 100, unit: "Kg" },
+            { name: "Beef Shank / Sengkel", yield: 85, unit: "Kg" }, { name: "Beef Tongue / Lidah Sapi", yield: 75, unit: "Kg" },
+            { name: "Lamb Rack (French Trimmed)", yield: 75, unit: "Kg" }, { name: "Lamb Leg (Utuh)", yield: 70, unit: "Kg" },
+            { name: "Lamb Chop", yield: 80, unit: "Kg" }, { name: "Daging Kambing / Goat Meat", yield: 65, unit: "Kg" },
+            { name: "Sosis Sapi / Beef Sausage", yield: 100, unit: "Kg" }
+        ],
+        "Unggas (Poultry)": [
+            { name: "Ayam Utuh (Karkas Boneless)", yield: 50, unit: "Kg" }, { name: "Ayam Utuh (Potong Standar)", yield: 90, unit: "Kg" },
+            { name: "Dada Ayam Fillet (Boneless)", yield: 95, unit: "Kg" }, { name: "Paha Ayam Fillet (Boneless)", yield: 90, unit: "Kg" },
+            { name: "Sayap Ayam / Chicken Wings", yield: 85, unit: "Kg" }, { name: "Paha Bawah / Drumstick", yield: 85, unit: "Kg" },
+            { name: "Ati Ampela Ayam", yield: 90, unit: "Kg" }, { name: "Bebek Utuh (Karkas)", yield: 45, unit: "Kg" },
+            { name: "Dada Bebek / Duck Breast", yield: 90, unit: "Kg" }, { name: "Paha Bebek / Duck Leg", yield: 85, unit: "Kg" },
+            { name: "Burung Puyuh / Quail", yield: 60, unit: "Kg" }, { name: "Telur Ayam", yield: 100, unit: "Butir" },
+            { name: "Telur Bebek", yield: 100, unit: "Butir" }, { name: "Telur Puyuh", yield: 100, unit: "Butir" },
+            { name: "Sosis Ayam / Chicken Sausage", yield: 100, unit: "Kg" }
+        ],
+        "Hidangan Laut (Seafood)": [
+            { name: "Ikan Karang (Jadi Fillet)", yield: 45, unit: "Kg" }, { name: "Ikan Karang (Bersih Bakar)", yield: 80, unit: "Kg" },
+            { name: "Salmon Whole (Jadi Fillet)", yield: 65, unit: "Kg" }, { name: "Tuna Loin", yield: 95, unit: "Kg" },
+            { name: "Ikan Dory Fillet", yield: 100, unit: "Kg" }, { name: "Udang Tiger/Pancet Utuh", yield: 60, unit: "Kg" },
+            { name: "Udang Kupas Bersih (PD)", yield: 100, unit: "Kg" }, { name: "Udang Tanpa Kepala (HL)", yield: 70, unit: "Kg" },
+            { name: "Cumi Utuh (Bersih Tube)", yield: 75, unit: "Kg" }, { name: "Cumi Ring / Calamari", yield: 100, unit: "Kg" },
+            { name: "Kepiting Utuh (Ambil Daging)", yield: 25, unit: "Kg" }, { name: "Daging Kepiting / Crab Meat", yield: 100, unit: "Kg" },
+            { name: "Soft Shell Crab (Soka)", yield: 90, unit: "Kg" }, { name: "Kerang Hijau (Cangkang)", yield: 30, unit: "Kg" },
+            { name: "Kerang Dara (Cangkang)", yield: 30, unit: "Kg" }, { name: "Scallop Meat", yield: 100, unit: "Kg" },
+            { name: "Tiram / Oyster (Cangkang)", yield: 20, unit: "Kg" }, { name: "Gurita / Octopus", yield: 70, unit: "Kg" },
+            { name: "Lobster Utuh", yield: 35, unit: "Kg" }, { name: "Lobster Tail", yield: 80, unit: "Kg" }
+        ],
+        "Sayuran (Vegetables)": [
+            { name: "Kentang (Kupas Utuh)", yield: 85, unit: "Kg" }, { name: "Wortel (Kupas)", yield: 85, unit: "Kg" },
+            { name: "Brokoli (Kuntum)", yield: 65, unit: "Kg" }, { name: "Kembang Kol / Cauliflower", yield: 65, unit: "Kg" },
+            { name: "Bawang Merah", yield: 90, unit: "Kg" }, { name: "Bawang Putih (Utuh)", yield: 85, unit: "Kg" },
+            { name: "Bawang Bombay / Onion", yield: 90, unit: "Kg" }, { name: "Paprika (Mix Color)", yield: 85, unit: "Kg" },
+            { name: "Bayam / Spinach (Daun)", yield: 70, unit: "Kg" }, { name: "Kangkung (Daun)", yield: 70, unit: "Kg" },
+            { name: "Tomat Merah", yield: 95, unit: "Kg" }, { name: "Tomat Cherry", yield: 100, unit: "Kg" },
+            { name: "Jamur Champignon / Button", yield: 90, unit: "Kg" }, { name: "Jamur Shitake", yield: 90, unit: "Kg" },
+            { name: "Jamur Kuping", yield: 90, unit: "Kg" }, { name: "Terong / Eggplant", yield: 90, unit: "Kg" },
+            { name: "Kubis / Kol Putih", yield: 80, unit: "Kg" }, { name: "Selada / Iceberg Lettuce", yield: 75, unit: "Kg" },
+            { name: "Daun Bawang / Leek", yield: 80, unit: "Kg" }, { name: "Seledri / Celery", yield: 80, unit: "Kg" },
+            { name: "Buncis / Kacang Panjang", yield: 85, unit: "Kg" }, { name: "Asparagus", yield: 60, unit: "Kg" },
+            { name: "Timun / Cucumber", yield: 85, unit: "Kg" }, { name: "Zucchini", yield: 90, unit: "Kg" },
+            { name: "Labu / Pumpkin", yield: 70, unit: "Kg" }, { name: "Singkong / Cassava", yield: 75, unit: "Kg" },
+            { name: "Ubi Jalar / Sweet Potato", yield: 80, unit: "Kg" }
+        ],
+        "Rempah & Bumbu Segar (Herbs & Spices)": [
+            { name: "Sereh / Lemongrass", yield: 60, unit: "Kg" }, { name: "Jahe / Ginger", yield: 80, unit: "Kg" },
+            { name: "Lengkuas / Galangal", yield: 80, unit: "Kg" }, { name: "Kunyit / Turmeric", yield: 80, unit: "Kg" },
+            { name: "Cabai Merah / Rawit", yield: 95, unit: "Kg" }, { name: "Daun Ketumbar / Coriander", yield: 60, unit: "Kg" },
+            { name: "Daun Jeruk / Salam", yield: 90, unit: "Kg" }
+        ],
+        "Buah-buahan (Fruits)": [
+            { name: "Semangka / Watermelon", yield: 55, unit: "Kg" }, { name: "Melon", yield: 55, unit: "Kg" },
+            { name: "Nanas / Pineapple", yield: 50, unit: "Buah" }, { name: "Pepaya", yield: 70, unit: "Kg" },
+            { name: "Pisang / Banana", yield: 70, unit: "Kg" }, { name: "Jeruk Nipis/Lemon (Peras)", yield: 40, unit: "Kg" },
+            { name: "Apel / Pir", yield: 90, unit: "Kg" }, { name: "Strawberry / Anggur", yield: 95, unit: "Kg" },
+            { name: "Mangga / Mango", yield: 65, unit: "Kg" }, { name: "Alpukat / Avocado", yield: 60, unit: "Kg" }
+        ],
+        "Bahan Kering & Olahan (Dry Goods)": [
+            { name: "Beras Putih / Merah", yield: 100, unit: "Kg" }, { name: "Beras Ketan", yield: 100, unit: "Kg" },
+            { name: "Gula Pasir", yield: 100, unit: "Kg" }, { name: "Gula Aren / Merah", yield: 100, unit: "Kg" },
+            { name: "Tepung Terigu", yield: 100, unit: "Kg" }, { name: "Tepung Maizena / Tapioka", yield: 100, unit: "Kg" },
+            { name: "Minyak Goreng", yield: 100, unit: "Liter" }, { name: "Minyak Zaitun / Olive Oil", yield: 100, unit: "Liter" },
+            { name: "Susu Segar / UHT", yield: 100, unit: "Liter" }, { name: "Cooking Cream / Heavy Cream", yield: 100, unit: "Liter" },
+            { name: "Mentega / Butter", yield: 100, unit: "Kg" }, { name: "Margarin", yield: 100, unit: "Kg" },
+            { name: "Keju Cheddar", yield: 100, unit: "Kg" }, { name: "Keju Mozzarella", yield: 100, unit: "Kg" },
+            { name: "Garam / Lada Putih", yield: 100, unit: "Pack" }, { name: "Kaldu Bubuk (Ayam/Sapi)", yield: 100, unit: "Pack" },
+            { name: "Kecap Manis / Asin", yield: 100, unit: "Botol" }, { name: "Saus Sambal / Tomat", yield: 100, unit: "Botol" },
+            { name: "Saus Tiram / Oyster Sauce", yield: 100, unit: "Botol" }, { name: "Pasta (Spaghetti/Macaroni)", yield: 100, unit: "Kg" }
+        ]
+    };
+
+    let optionsHTML = '<option value="">-- Pilih Bahan Baku --</option>';
+    for (const cat in yieldDatabase) {
+        optionsHTML += `<optgroup label="${cat}">`;
+        yieldDatabase[cat].forEach(item => optionsHTML += `<option value="${item.name}" data-yield="${item.yield}" data-unit="${item.unit}">${item.name}</option>`);
+        optionsHTML += `</optgroup>`;
+    }
+    optionsHTML += '<optgroup label="Lainnya"><option value="custom">-- Input Manual (Custom) --</option></optgroup>';
+
+    const unitOptionsHTML = `
+        <option value="">-</option>
+        <option value="Kg">Kg</option>
+        <option value="Gram">Gram</option>
+        <option value="Liter">Liter</option>
+        <option value="Ml">Ml</option>
+        <option value="Pcs">Pcs</option>
+        <option value="Pack">Pack</option>
+        <option value="Botol">Botol</option>
+        <option value="Kaleng">Kaleng</option>
+        <option value="Butir">Butir</option>
+        <option value="Ikat">Ikat</option>
+        <option value="Buah">Buah</option>
+    `;
+
+    // --- TAB SWITCHER LOGIC ---
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+        if(tabId === 'report') loadReport();
+    }
+
+    function formatCurrencyInput(input) {
+        let val = input.value.replace(/[^0-9]/g, '');
+        input.value = val ? new Intl.NumberFormat('id-ID').format(val) : '';
+    }
+    function unformatCurrency(val) { return parseFloat(val?.replace(/\./g, '')) || 0; }
+    function formatRupiah(angka) { return new Intl.NumberFormat('id-ID').format(Math.round(angka)); }
+
+    // --- FITUR REFRESH / FORM BARU ---
+    function resetForm() {
+        if(confirm("Apakah Anda yakin ingin mengosongkan seluruh form untuk membuat SR baru?")) {
+            document.getElementById('eventName').value = '';
+            document.getElementById('eventDate').value = '';
+            document.getElementById('pax').value = '200';
+            document.getElementById('sellingPrice').value = '150.000';
+            document.getElementById('mlBody').innerHTML = '';
+            addRow();
+            calculateAll();
+        }
+    }
+
+    // --- LOGIKA PERUBAHAN ITEM (YIELD DIKUNCI, SATUAN BEBAS) ---
+    function handleItemChange(selectEl) {
+        const row = selectEl.closest('tr');
+        const customInput = row.querySelector('.custom-name-input');
+        const unitInput = row.querySelector('.unit-input');
+        const yieldInput = row.querySelector('.yield-pct');
+
+        if (selectEl.value === 'custom') {
+            // JIKA CUSTOM: Buka kunci yield agar bisa diisi manual
+            customInput.style.display = 'block'; 
+            if(!customInput.value) customInput.value = '';
+            yieldInput.value = '100'; 
+            yieldInput.removeAttribute('readonly'); 
+            yieldInput.classList.remove('locked-input');
+        } else {
+            customInput.style.display = 'none';
+            if (selectEl.value !== '') {
+                // JIKA DARI DATABASE: Isi otomatis dan KUNCI YIELD (TIDAK BISA DIUTAK-ATIK)
+                const opt = selectEl.options[selectEl.selectedIndex];
+                unitInput.value = opt.getAttribute('data-unit'); 
+                
+                yieldInput.value = opt.getAttribute('data-yield'); 
+                yieldInput.setAttribute('readonly', 'true'); 
+                yieldInput.classList.add('locked-input');
+            } else {
+                // JIKA KOSONG: Reset
+                unitInput.value = ''; 
+                yieldInput.value = '';
+                yieldInput.removeAttribute('readonly');
+                yieldInput.classList.remove('locked-input');
+            }
+        }
+        calculateAll();
+    }
+
+    function calculateAll() {
+        const pax = parseFloat(document.getElementById('pax').value) || 1;
+        const totalRev = pax * unformatCurrency(document.getElementById('sellingPrice').value);
+        const targetBudget = totalRev * 0.28;
+        
+        document.getElementById('totalRevenueText').innerText = 'Rp ' + formatRupiah(totalRev);
+        document.getElementById('budgetAmount').innerText = 'Rp ' + formatRupiah(targetBudget);
+        
+        let grandTotal = 0;
+        
+        document.querySelectorAll('#mlBody tr').forEach(row => {
+            const net = parseFloat(row.querySelector('.qty-base').value) || 0;
+            const yld = parseFloat(row.querySelector('.yield-pct').value) || 100;
+            const bulkPct = parseFloat(row.querySelector('.bulk-pct').value) || 100; 
+            const price = unformatCurrency(row.querySelector('.price-unit').value);
+            
+            const actualYield = yld > 0 ? (yld / 100) : 1;
+            
+            const idealConsumed = (net * pax) / actualYield;
+            row.querySelector('.qty-ideal').value = parseFloat(idealConsumed.toFixed(3));
+            
+            const grossActual = idealConsumed * (bulkPct / 100);
+            row.querySelector('.qty-actual').value = parseFloat(grossActual.toFixed(3)); 
+            
+            const totalRowPrice = grossActual * price;
+            row.querySelector('.price-total').value = formatRupiah(totalRowPrice);
+            
+            grandTotal += totalRowPrice; 
+        });
+
+        document.getElementById('grandTotalText').innerText = 'Rp ' + formatRupiah(grandTotal);
+        document.getElementById('actualAmount').innerText = 'Rp ' + formatRupiah(grandTotal);
+        
+        const actualBox = document.getElementById('actualBox');
+        const actualFCPctEl = document.getElementById('actualFCPct');
+        
+        if (totalRev > 0) {
+            const actualPct = (grandTotal / totalRev) * 100;
+            actualFCPctEl.innerText = actualPct.toFixed(2) + '%';
+            
+            if (actualPct > 28) {
+                actualBox.classList.add('over-budget');
+                actualFCPctEl.style.color = '#c0392b';
+                document.getElementById('grandTotalText').style.color = "#c0392b";
+            } else {
+                actualBox.classList.remove('over-budget');
+                actualFCPctEl.style.color = '#1e8449';
+                document.getElementById('grandTotalText').style.color = "#1e8449";
+            }
+        } else {
+            actualFCPctEl.innerText = '0.00%';
+            actualBox.classList.remove('over-budget');
+        }
+    }
+
+    function addRow() {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><select class="table-input" onchange="handleItemChange(this)">${optionsHTML}</select><input type="text" class="table-input custom-name-input" placeholder="Ketik nama bahan..."></td>
+            <td><input type="number" class="table-input qty-base" value="0" step="0.001" oninput="calculateAll()"></td>
+            <td><select class="table-input unit-input" onchange="calculateAll()">${unitOptionsHTML}</select></td>
+            <td class="yield-col"><input type="number" class="table-input yield-pct" value="100" oninput="calculateAll()"></td>
+            <td class="bulk-col"><input type="number" class="table-input bulk-pct" value="100" min="1" max="100" oninput="calculateAll()"></td>
+            <td class="std-col"><input type="number" class="table-input qty-ideal" readonly title="Ideal mentah untuk Pax event ini sebelum efisiensi"></td>
+            <td class="actual-ap-col"><input type="number" class="table-input qty-actual" readonly title="Angka SR mutlak yang diajukan ke Purchasing"></td>
+            <td><input type="text" class="table-input price-unit" onkeyup="formatCurrencyInput(this); calculateAll()"></td>
+            <td><input type="text" class="table-input price-total" readonly></td>
+            <td class="no-print"><button class="btn btn-remove" onclick="this.closest('tr').remove(); calculateAll()">X</button></td>
+        `;
+        document.getElementById('mlBody').appendChild(tr);
+    }
+    
+    // --- FITUR SIMPAN DATA (LOCAL STORAGE) ---
+    function saveEventData() {
+        const eventName = document.getElementById('eventName').value || "Event Tanpa Nama";
+        const eventDate = document.getElementById('eventDate').value || new Date().toISOString().split('T')[0];
+        const pax = document.getElementById('pax').value;
+        const totalRev = unformatCurrency(document.getElementById('totalRevenueText').innerText);
+        const totalCost = unformatCurrency(document.getElementById('grandTotalText').innerText);
+        
+        let eventsArray = JSON.parse(localStorage.getItem('fnb_events')) || [];
+        
+        const newEvent = {
+            id: Date.now(),
+            name: eventName,
+            date: eventDate,
+            pax: pax,
+            revenue: totalRev,
+            cost: totalCost
+        };
+        
+        eventsArray.push(newEvent);
+        localStorage.setItem('fnb_events', JSON.stringify(eventsArray));
+        
+        alert("Data Event Berhasil Disimpan ke Database Lokal!");
+    }
+
+    // --- FITUR REPORT & FILTER ---
+    function loadReport() {
+        const tbody = document.getElementById('reportBody');
+        tbody.innerHTML = '';
+        
+        let eventsArray = JSON.parse(localStorage.getItem('fnb_events')) || [];
+        
+        const filterStart = document.getElementById('filterStart').value;
+        const filterEnd = document.getElementById('filterEnd').value;
+        
+        let sumRev = 0;
+        let sumCost = 0;
+
+        eventsArray.forEach(evt => {
+            // Logika Filter
+            if (filterStart && evt.date < filterStart) return;
+            if (filterEnd && evt.date > filterEnd) return;
+            
+            sumRev += evt.revenue;
+            sumCost += evt.cost;
+            const pct = evt.revenue > 0 ? ((evt.cost / evt.revenue) * 100).toFixed(2) : 0;
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${evt.date}</td>
+                <td><strong>${evt.name}</strong></td>
+                <td>${evt.pax}</td>
+                <td>Rp ${formatRupiah(evt.revenue)}</td>
+                <td>Rp ${formatRupiah(evt.cost)}</td>
+                <td style="color:${pct > 28 ? 'red' : 'green'}; font-weight:bold;">${pct}%</td>
+                <td class="no-print"><button class="btn btn-remove" onclick="deleteEvent(${evt.id})">Hapus</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Update Grand Total Report
+        document.getElementById('repTotalRev').innerText = 'Rp ' + formatRupiah(sumRev);
+        document.getElementById('repTotalCost').innerText = 'Rp ' + formatRupiah(sumCost);
+        const tPct = sumRev > 0 ? ((sumCost / sumRev) * 100).toFixed(2) : 0;
+        document.getElementById('repTotalPct').innerText = tPct + '%';
+        document.getElementById('repTotalPct').style.color = tPct > 28 ? 'red' : '#196f3d';
+    }
+
+    function deleteEvent(id) {
+        if(confirm("Hapus data event ini?")) {
+            let eventsArray = JSON.parse(localStorage.getItem('fnb_events')) || [];
+            eventsArray = eventsArray.filter(e => e.id !== id);
+            localStorage.setItem('fnb_events', JSON.stringify(eventsArray));
+            loadReport();
+        }
+    }
+
+    function clearAllData() {
+        if(confirm("PERINGATAN! Anda yakin ingin menghapus SELURUH arsip data event?")) {
+            localStorage.removeItem('fnb_events');
+            loadReport();
+        }
+    }
+
+    window.onload = () => { addRow(); calculateAll(); };
+</script>
+</body>
+</html>
