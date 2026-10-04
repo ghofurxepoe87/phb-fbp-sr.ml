@@ -324,7 +324,6 @@
         let users = JSON.parse(localStorage.getItem('fnb_users')) || [];
         const validUser = users.find(x => x.username === u && x.password === p);
 
-        // Akun Default Hotel jika belum register
         if((u === 'admin' && p === 'admin123') || validUser) {
             const activeUser = validUser ? validUser.username : u;
             localStorage.setItem('fnb_logged_user', activeUser);
@@ -592,14 +591,19 @@
         document.getElementById('mlBody').appendChild(tr);
     }
     
-    // --- FITUR SIMPAN DATA (LOCAL STORAGE DENGAN USERNAME) ---
+    // --- FITUR SIMPAN DATA (MENGAMBIL NILAI REAL-TIME DARI LAYAR) ---
     function saveEventData() {
+        // Pastikan kalkulasi terbaru dijalankan sebelum disimpan
+        calculateAll();
+
         const eventName = document.getElementById('eventName').value || "Event Tanpa Nama";
         const eventDate = document.getElementById('eventDate').value || new Date().toISOString().split('T')[0];
         const pax = document.getElementById('pax').value;
+        
+        // Ambil nilai real-time langsung dari teks di dashboard
         const totalRev = unformatCurrency(document.getElementById('totalRevenueText').innerText);
         const totalCost = unformatCurrency(document.getElementById('grandTotalText').innerText);
-        const creator = localStorage.getItem('fnb_logged_user') || 'Unknown';
+        const creator = localStorage.getItem('fnb_logged_user') || 'Admin';
         
         let eventsArray = JSON.parse(localStorage.getItem('fnb_events')) || [];
         
@@ -616,7 +620,10 @@
         eventsArray.push(newEvent);
         localStorage.setItem('fnb_events', JSON.stringify(eventsArray));
         
-        alert("Data Event Berhasil Disimpan oleh user: " + creator);
+        alert("Data Event Berhasil Disimpan!\nEvent: " + eventName + "\nCost: " + document.getElementById('grandTotalText').innerText);
+        
+        // Otomatis pindah ke tab laporan untuk melihat hasilnya
+        switchTab('report', document.querySelectorAll('.tab-btn')[1]);
     }
 
     // --- FITUR REPORT & FILTER ---
@@ -636,8 +643,8 @@
             if (filterStart && evt.date < filterStart) return;
             if (filterEnd && evt.date > filterEnd) return;
             
-            sumRev += evt.revenue;
-            sumCost += evt.cost;
+            sumRev += evt.revenue || 0;
+            sumCost += evt.cost || 0;
             const pct = evt.revenue > 0 ? ((evt.cost / evt.revenue) * 100).toFixed(2) : 0;
             const creatorName = evt.creator || 'Admin';
             
@@ -647,8 +654,8 @@
                 <td><strong>${evt.name}</strong></td>
                 <td>${evt.pax}</td>
                 <td><span style="background:#eef2f3; padding:3px 8px; border-radius:4px; font-weight:600;">${creatorName}</span></td>
-                <td>Rp ${formatRupiah(evt.revenue)}</td>
-                <td>Rp ${formatRupiah(evt.cost)}</td>
+                <td>Rp ${formatRupiah(evt.revenue || 0)}</td>
+                <td>Rp ${formatRupiah(evt.cost || 0)}</td>
                 <td style="color:${pct > 28 ? 'red' : 'green'}; font-weight:bold;">${pct}%</td>
                 <td class="no-print"><button class="btn btn-remove" onclick="deleteEvent(${evt.id})">Hapus</button></td>
             `;
