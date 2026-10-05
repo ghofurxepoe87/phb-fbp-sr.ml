@@ -384,7 +384,7 @@
         "Hidangan Laut (Seafood)": [
             { name: "Ikan Karang (Jadi Fillet)", yield: 45, unit: "Kg" }, { name: "Ikan Karang (Bersih Bakar)", yield: 80, unit: "Kg" },
             { name: "Salmon Whole (Jadi Fillet)", yield: 65, unit: "Kg" }, { name: "Tuna Loin", yield: 95, unit: "Kg" },
-            { name: "Ikan Dory Fillet", yield: 100, unit: "Kg" }, { name: "Udang Tiger/Pancet Utuh", yield: 60, unit: "Kg" },
+            { name: "Ikan Dory Fillet", yield: 80, unit: "Kg" }, { name: "Udang Tiger/Pancet Utuh", yield: 60, unit: "Kg" },
             { name: "Udang Kupas Bersih (PD)", yield: 100, unit: "Kg" }, { name: "Udang Tanpa Kepala (HL)", yield: 70, unit: "Kg" },
             { name: "Cumi Utuh (Bersih Tube)", yield: 75, unit: "Kg" }, { name: "Cumi Ring / Calamari", yield: 100, unit: "Kg" },
             { name: "Kepiting Utuh (Ambil Daging)", yield: 25, unit: "Kg" }, { name: "Daging Kepiting / Crab Meat", yield: 100, unit: "Kg" },
@@ -591,7 +591,7 @@
         document.getElementById('mlBody').appendChild(tr);
     }
     
-    // --- FITUR SIMPAN DATA (MENGHITUNG ULANG DENGAN AMAN) ---
+    // --- FITUR SIMPAN DATA ---
     function saveEventData() {
         calculateAll();
 
@@ -599,7 +599,7 @@
         const eventDate = document.getElementById('eventDate').value || new Date().toISOString().split('T')[0];
         const pax = parseFloat(document.getElementById('pax').value) || 0;
         
-        let totalRev = 0;
+        let totalCost = 0;
         document.querySelectorAll('#mlBody tr').forEach(row => {
             const net = parseFloat(row.querySelector('.qty-base').value) || 0;
             const yld = parseFloat(row.querySelector('.yield-pct').value) || 100;
@@ -608,7 +608,7 @@
             const actualYield = yld > 0 ? (yld / 100) : 1;
             const idealConsumed = (net * pax) / actualYield;
             const grossActual = idealConsumed * (bulkPct / 100);
-            totalRev += (grossActual * price);
+            totalCost += (grossActual * price);
         });
 
         const sellingPricePerPax = unformatCurrency(document.getElementById('sellingPrice').value);
@@ -624,15 +624,14 @@
             pax: pax,
             creator: creator,
             revenue: calculatedRevenue,
-            cost: totalRev
+            cost: totalCost
         };
         
         eventsArray.push(newEvent);
         localStorage.setItem('fnb_events', JSON.stringify(eventsArray));
         
-        alert("Data Event Berhasil Disimpan!\nEvent: " + eventName + "\nTotal Actual Cost: Rp " + formatRupiah(totalRev));
+        alert("Data Event Berhasil Disimpan!\nEvent: " + eventName + "\nTotal Actual Cost: Rp " + formatRupiah(totalCost));
         
-        // Pindah otomatis ke tab laporan
         switchTab('report', document.querySelectorAll('.tab-btn')[1]);
     }
 
