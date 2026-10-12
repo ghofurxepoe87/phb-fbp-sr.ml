@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hotel F&B Management System - SR & Market List</title>
     <link rel="icon" type="image/png" href="favicon.png">
+    <!-- Load Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { 
             --primary: #1a252f; /* Dark Navy Elegan */
@@ -170,7 +172,7 @@
 
         <div class="tabs no-print">
             <button class="tab-btn active" onclick="switchTab('form', this)">Form SR & Market List</button>
-            <button class="tab-btn" onclick="switchTab('report', this)">Laporan & Riwayat Event</button>
+            <button class="tab-btn" onclick="switchTab('report', this)">Laporan & Riwayat Event (Cloud)</button>
         </div>
 
         <!-- TAB 1: FORM INPUT -->
@@ -225,14 +227,14 @@
             <div style="display: flex; gap: 10px; margin-top: 20px;" class="no-print">
                 <button class="btn btn-add btn-full" onclick="addRow()">+ Tambah Item</button>
                 <button class="btn btn-warning btn-full" onclick="resetForm()">🔄 Refresh / Form Baru</button>
-                <button class="btn btn-save btn-full" onclick="saveEventData()">💾 Simpan ke Database</button>
+                <button class="btn btn-save btn-full" onclick="saveEventData()">💾 Simpan ke Database Cloud</button>
                 <button class="btn btn-print btn-full" onclick="window.print()">🖨️ Cetak / PDF</button>
             </div>
         </div>
 
         <!-- TAB 2: REPORT & ARSIP -->
         <div id="report" class="tab-content">
-            <h2>Laporan & Riwayat Event</h2>
+            <h2>Laporan & Riwayat Event (Cloud Database)</h2>
             
             <div class="filter-box no-print">
                 <div class="form-group">
@@ -244,7 +246,6 @@
                     <input type="date" id="filterEnd">
                 </div>
                 <button class="btn btn-add" style="margin:0 0 2px 0;" onclick="loadReport()">Filter Data</button>
-                <button class="btn btn-danger" style="margin:0 0 2px 0; background-color:#c0392b;" onclick="clearAllData()">Hapus Semua Data</button>
                 <button class="btn btn-print" style="margin:0 0 2px auto;" onclick="window.print()">🖨️ Cetak Laporan</button>
             </div>
 
@@ -280,6 +281,12 @@
     </div>
 
 <script>
+    // --- KONFIGURASI SUPABASE ---
+    const SUPABASE_URL = 'https://iufxuveluesectjipfeu.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_rjX-g5s7d7B8wk4fYco0ZA_zuozV7jd';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     // --- AUTHENTICATION LOGIC ---
     function switchAuthTab(tab, btn) {
         document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
@@ -592,8 +599,8 @@
         document.getElementById('mlBody').appendChild(tr);
     }
     
-    // --- FITUR SIMPAN DATA ---
-    function saveEventData() {
+    // --- FITUR SIMPAN DATA KE SUPABASE CLOUD ---
+    async function saveEventData() {
         calculateAll();
 
         const eventName = document.getElementById('eventName').value || "Event Tanpa Nama";
@@ -616,10 +623,7 @@
         const calculatedRevenue = pax * sellingPricePerPax;
         const creator = localStorage.getItem('fnb_logged_user') || 'Admin';
         
-        let eventsArray = JSON.parse(localStorage.getItem('fnb_events')) || [];
-        
         const newEvent = {
-            id: Date.now(),
             name: eventName,
             date: eventDate,
             pax: pax,
@@ -628,31 +632,42 @@
             cost: totalCost
         };
         
-        eventsArray.push(newEvent);
-        localStorage.setItem('fnb_events', JSON.stringify(eventsArray));
+        const { data, error } = await supabaseClient.from('events').insert([newEvent]);
         
-        alert("Data Event Berhasil Disimpan!\nEvent: " + eventName + "\nTotal Actual Cost: Rp " + formatRupiah(totalCost));
-        
-        switchTab('report', document.querySelectorAll('.tab-btn')[1]);
+        if (error) {
+            alert("Gagal menyimpan ke cloud: " + error.message);
+        } else {
+            alert("Data Event Berhasil Disimpan ke Cloud Database!\nEvent: " + eventName + "\nTotal Actual Cost: Rp " + formatRupiah(totalCost));
+            switchTab('report', document.querySelectorAll('.tab-btn')[1]);
+        }
     }
 
-    // --- FITUR REPORT & FILTER ---
-    function loadReport() {
+    // --- FITUR REPORT & FILTER DARI CLOUD ---
+    async function loadReport() {
         const tbody = document.getElementById('reportBody');
-        tbody.innerHTML = '';
-        
-        let eventsArray = JSON.parse(localStorage.getItem('fnb_events')) || [];
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Memuat data dari Cloud...</td></tr>';
         
         const filterStart = document.getElementById('filterStart').value;
         const filterEnd = document.getElementById('filterEnd').value;
         
+        let query = supabaseClient.from('events').select('*').order('date', { ascending: false });
+        
+        if (filterStart) query = query.gte('date', filterStart);
+        if (filterEnd) query = query.lte('date', filterEnd);
+
+        const { data: eventsArray, error } = await query;
+        
+        tbody.innerHTML = '';
+        
+        if (error) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">Gagal memuat data: ${error.message}</td></tr>`;
+            return;
+        }
+
         let sumRev = 0;
         let sumCost = 0;
 
         eventsArray.forEach(evt => {
-            if (filterStart && evt.date < filterStart) return;
-            if (filterEnd && evt.date > filterEnd) return;
-            
             const rev = parseFloat(evt.revenue) || 0;
             const cost = parseFloat(evt.cost) || 0;
             
@@ -682,19 +697,14 @@
         document.getElementById('repTotalPct').style.color = tPct > 28 ? 'red' : '#196f3d';
     }
 
-    function deleteEvent(id) {
-        if(confirm("Hapus data event ini?")) {
-            let eventsArray = JSON.parse(localStorage.getItem('fnb_events')) || [];
-            eventsArray = eventsArray.filter(e => e.id !== id);
-            localStorage.setItem('fnb_events', JSON.stringify(eventsArray));
-            loadReport();
-        }
-    }
-
-    function clearAllData() {
-        if(confirm("PERINGATAN! Anda yakin ingin menghapus SELURUH arsip data event?")) {
-            localStorage.removeItem('fnb_events');
-            loadReport();
+    async function deleteEvent(id) {
+        if(confirm("Hapus data event ini dari Cloud database?")) {
+            const { error } = await supabaseClient.from('events').delete().eq('id', id);
+            if (error) {
+                alert("Gagal menghapus data: " + error.message);
+            } else {
+                loadReport();
+            }
         }
     }
 </script>
